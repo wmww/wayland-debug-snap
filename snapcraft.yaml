@@ -1,0 +1,24 @@
+name: wayland-debug
+version: git
+summary: Wayland debugging toolkit
+description: |
+  wayland-debug is a command line tool that can be used to view Wayland messages with syntax
+  highlighting, filter them, even set breakpoints on specific messages (when run as a GDB plugin)
+base: core20
+confinement: classic
+
+parts:
+  wayland-debug:
+    plugin: dump
+    source: https://github.com/wmww/wayland-debug.git
+    prime:
+      - -**/.github
+      - -**/test
+      - -**/.gitignore
+      - -**/libwayland_debug_logs
+      - -**/update-protocols.sh
+    # python3 dependency is provided by the core20 base
+
+apps:
+  wayland-debug:
+    command: main.py
