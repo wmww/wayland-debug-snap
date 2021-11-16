@@ -4,6 +4,7 @@ summary: Wayland debugging toolkit
 description: |
   wayland-debug is a command line tool that can be used to view Wayland messages with syntax
   highlighting, filter them, even set breakpoints on specific messages (when run as a GDB plugin)
+license: MIT
 base: core20
 confinement: classic
 
