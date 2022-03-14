@@ -7,6 +7,7 @@ description: |
 license: MIT
 base: core20
 confinement: classic
+grade: stable
 
 parts:
   wayland-debug:
@@ -19,6 +20,31 @@ parts:
       - -**/libwayland_debug_logs
       - -**/update-protocols.sh
     # python3 dependency is provided by the core20 base
+
+  libwayland:
+    plugin: meson
+    source: https://gitlab.freedesktop.org/wayland/wayland.git
+    source-tag: 1.20.0
+    build-packages:
+      - debhelper
+      - libexpat1-dev
+      - libffi-dev
+      - pkg-config
+    override-pull: |
+      snapcraftctl pull
+      find . -name meson.build | xargs sed -i "s/'libffi'/'libffi', static: true/g"
+      # NOTE: to allow static linking to libffi within a shared object, I normally need to recompile
+      # libffi with CFLAGS='-fPIC', but this doesn't seem to be needed in the snap?
+    meson-parameters: [-Dtests=false, -Ddocumentation=false, -Ddtd_validation=false]
+    override-build: |
+      snapcraftctl build
+      SOURCE="$SNAPCRAFT_PART_INSTALL/usr/local/lib/$SNAPCRAFT_ARCH_TRIPLET"
+      TARGET="$SNAPCRAFT_PART_INSTALL/resources/wayland/build/src"
+      mkdir -p "$TARGET"
+      find "$SOURCE/" -name 'libwayland-client*' -or -name 'libwayland-server*' | xargs -I {} mv {} "$TARGET"
+      rm -Rf $SNAPCRAFT_PART_INSTALL/usr/
+    build-attributes:
+      - no-patchelf
 
 apps:
   wayland-debug:
