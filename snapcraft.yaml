@@ -21,20 +21,25 @@ parts:
       - -**/update-protocols.sh
     # python3 dependency is provided by the core20 base
 
+  libffi:
+    # By compiling a custom libffi we can force it to be statically linked
+    plugin: autotools
+    source: https://github.com/libffi/libffi.git
+    source-tag: v3.4.2 # Keep up to date with the latest
+    build-packages:
+      - libltdl-dev
+      - texinfo
+    autotools-configure-parameters: [--disable-shared, --enable-static, CFLAGS='-fPIC']
+
   libwayland:
+    after: [libffi]
     plugin: meson
     source: https://gitlab.freedesktop.org/wayland/wayland.git
-    source-tag: 1.20.0
+    source-tag: 1.20.0 # Keep up to date with the latest
     build-packages:
       - debhelper
       - libexpat1-dev
-      - libffi-dev
       - pkg-config
-    override-pull: |
-      snapcraftctl pull
-      find . -name meson.build | xargs sed -i "s/'libffi'/'libffi', static: true/g"
-      # NOTE: to allow static linking to libffi within a shared object, I normally need to recompile
-      # libffi with CFLAGS='-fPIC', but this doesn't seem to be needed in the snap?
     meson-parameters: [-Dtests=false, -Ddocumentation=false, -Ddtd_validation=false]
     override-build: |
       snapcraftctl build
@@ -44,6 +49,9 @@ parts:
       find "$SOURCE/" -name 'libwayland-client*' -or -name 'libwayland-server*' | xargs -I {} mv {} "$TARGET"
       rm -Rf $SNAPCRAFT_PART_INSTALL/usr/
     build-attributes:
+      # Our libwayland will be dynamically linked to by a system binary, so we need to use the
+      # system libc. This is fragile, but seems to generally work at least on distros not older than
+      # the snap base (Ubuntu 20.04)
       - no-patchelf
 
 apps:
