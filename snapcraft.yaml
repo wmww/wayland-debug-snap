@@ -10,7 +10,18 @@ confinement: classic
 grade: stable
 
 parts:
+  libffi:
+    # By compiling a custom libffi we can force it to be statically linked
+    plugin: autotools
+    source: https://github.com/libffi/libffi.git
+    source-tag: v3.4.2
+    build-packages:
+      - libltdl-dev
+      - texinfo
+    autotools-configure-parameters: [--disable-shared, --enable-static, CFLAGS='-fPIC']
+
   wayland-debug:
+    after: [libffi]
     plugin: dump
     source: https://github.com/wmww/wayland-debug.git
     prime:
@@ -20,32 +31,17 @@ parts:
       - -**/libwayland_debug_logs
       - -**/update-protocols.sh
     # python3 dependency is provided by the core20 base
-
-  libffi:
-    # By compiling a custom libffi we can force it to be statically linked
-    plugin: autotools
-    source: https://github.com/libffi/libffi.git
+    override-build: |
+      snapcraftctl build
+      apt remove meson
+      # Install from pip so we get a version new enough to work
+      pip3 install meson ninja
+      "$SNAPCRAFT_PART_INSTALL/resources/get-libwayland.sh"
     build-packages:
-      - libltdl-dev
-      - texinfo
-    autotools-configure-parameters: [--disable-shared, --enable-static, CFLAGS='-fPIC']
-
-  libwayland:
-    after: [libffi]
-    plugin: meson
-    source: https://gitlab.freedesktop.org/wayland/wayland.git
-    build-packages:
+      - pip
       - debhelper
       - libexpat1-dev
       - pkg-config
-    meson-parameters: [-Dtests=false, -Ddocumentation=false, -Ddtd_validation=false]
-    override-build: |
-      snapcraftctl build
-      SOURCE="$SNAPCRAFT_PART_INSTALL/usr/local/lib/$SNAPCRAFT_ARCH_TRIPLET"
-      TARGET="$SNAPCRAFT_PART_INSTALL/resources/wayland/build/src"
-      mkdir -p "$TARGET"
-      find "$SOURCE/" -name 'libwayland-client*' -or -name 'libwayland-server*' | xargs -I {} mv {} "$TARGET"
-      rm -Rf $SNAPCRAFT_PART_INSTALL/usr/
     build-attributes:
       # Our libwayland will be dynamically linked to by a system binary, so we need to use the
       # system libc. This is fragile, but seems to generally work at least on distros not older than
