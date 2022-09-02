@@ -19,6 +19,9 @@ parts:
       - libltdl-dev
       - texinfo
     autotools-configure-parameters: [--disable-shared, --enable-static, CFLAGS='-fPIC']
+    # Since we are statically linking, we don't want to prime anything
+    prime:
+      - -usr/
 
   wayland-debug:
     after: [libffi]
@@ -37,8 +40,9 @@ parts:
       # Install from pip so we get a version new enough to work
       pip3 install meson ninja
       "$SNAPCRAFT_PART_INSTALL/resources/get-libwayland.sh"
+      "$SNAPCRAFT_PART_INSTALL/resources/remove-libwayland-build-files.sh"
     build-packages:
-      - pip
+      - python3-pip
       - debhelper
       - libexpat1-dev
       - pkg-config
