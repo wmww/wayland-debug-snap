@@ -25,7 +25,6 @@ parts:
     # By compiling a custom libffi we can force it to be statically linked
     plugin: autotools
     source: https://github.com/libffi/libffi.git
-    source-tag: v3.4.2 # Keep up to date with the latest
     build-packages:
       - libltdl-dev
       - texinfo
@@ -35,7 +34,6 @@ parts:
     after: [libffi]
     plugin: meson
     source: https://gitlab.freedesktop.org/wayland/wayland.git
-    source-tag: 1.20.0 # Keep up to date with the latest
     build-packages:
       - debhelper
       - libexpat1-dev
